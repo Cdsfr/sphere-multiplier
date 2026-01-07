@@ -1,0 +1,5 @@
+{
+  "name": "Sphere Multiplier",
+  "description": "Une simulation physique d'une balle rebondissant dans une sphère rotative. La balle se duplique lorsqu'elle s'échappe par l'ouverture, jusqu'à atteindre 50 balles.",
+  "requestFramePermissions": []
+}
