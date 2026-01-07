@@ -8,7 +8,6 @@ import {
   BOUNCE_DAMPING,
   ROTATION_SPEED,
   GAP_SIZE,
-  CONTAINER_RADIUS,
   BALL_RADIUS,
   MAX_VELOCITY,
   TIME_LIMIT_MS,
@@ -28,6 +27,7 @@ export const BallSimulation: React.FC = () => {
 
   const ballsRef = useRef<Ball[]>([]);
   const rotationRef = useRef<number>(0);
+  const containerRadiusRef = useRef<number>(250); // Default start value
   const stateRef = useRef<SimulationState>(SimulationState.IDLE);
 
   const [activeTimer, setActiveTimer] = useState<number>(TIME_LIMIT_MS / 1000);
@@ -63,7 +63,7 @@ export const BallSimulation: React.FC = () => {
     ctx.translate(centerX, centerY);
     ctx.rotate(rotationRef.current);
     ctx.beginPath();
-    ctx.arc(0, 0, CONTAINER_RADIUS, GAP_SIZE / 2, Math.PI * 2 - GAP_SIZE / 2);
+    ctx.arc(0, 0, containerRadiusRef.current, GAP_SIZE / 2, Math.PI * 2 - GAP_SIZE / 2);
     ctx.strokeStyle = '#64748b';
     ctx.lineWidth = 8;
     ctx.lineCap = 'round';
@@ -189,7 +189,7 @@ export const BallSimulation: React.FC = () => {
       // 2. Collision with Container Wall
       const distFromCenter = Math.sqrt(nextPos.x * nextPos.x + nextPos.y * nextPos.y);
 
-      if (distFromCenter + ball.radius >= CONTAINER_RADIUS) {
+      if (distFromCenter + ball.radius >= containerRadiusRef.current) {
         const angle = Math.atan2(nextPos.y, nextPos.x);
         let normalizedAngle = angle;
         if (normalizedAngle < 0) normalizedAngle += Math.PI * 2;
@@ -214,14 +214,14 @@ export const BallSimulation: React.FC = () => {
               ball.velocity.y = (ball.velocity.y / speed) * MAX_VELOCITY;
             }
 
-            const overlap = (distFromCenter + ball.radius) - CONTAINER_RADIUS;
+            const overlap = (distFromCenter + ball.radius) - containerRadiusRef.current;
             nextPos.x -= nx * (overlap + 1);
             nextPos.y -= ny * (overlap + 1);
             ball.color = generateColor();
           }
         } else {
           // Check for escape
-          if (distFromCenter > CONTAINER_RADIUS + ball.radius) {
+          if (distFromCenter > containerRadiusRef.current + ball.radius) {
             ballEscaped = true;
           }
         }
@@ -275,8 +275,16 @@ export const BallSimulation: React.FC = () => {
   useEffect(() => {
     const handleResize = () => {
       if (canvasRef.current) {
-        canvasRef.current.width = canvasRef.current.clientWidth;
-        canvasRef.current.height = canvasRef.current.clientHeight;
+        const { clientWidth, clientHeight } = canvasRef.current;
+        canvasRef.current.width = clientWidth;
+        canvasRef.current.height = clientHeight;
+
+        // Calculate available space subtracting UI height (approx 320px total for header + footer)
+        const uiVerticalSpace = 340;
+        const availableHeight = Math.max(300, clientHeight - uiVerticalSpace);
+        const availableWidth = Math.max(300, clientWidth - 40);
+
+        containerRadiusRef.current = Math.min(availableWidth, availableHeight) / 2;
       }
     };
     window.addEventListener('resize', handleResize);
